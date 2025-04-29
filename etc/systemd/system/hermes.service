@@ -1,0 +1,13 @@
+[Unit]
+Description=Hermes service
+After=network.target
+
+[Service]
+ExecStart=/work/server/hermes/bin/hermes
+ExecReload=/bin/kill -HUP
+KillMode=process
+Restart=always
+User=worker
+
+[Install]
+WantedBy=multi-user.target

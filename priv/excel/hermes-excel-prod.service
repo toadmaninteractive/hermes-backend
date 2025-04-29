@@ -1,0 +1,16 @@
+[Unit]
+Description=Hermes Excel Generator Stable Service
+After=network.target
+
+[Service]
+WorkingDirectory=/work/hermes/stable/backend/build/src/priv/excel
+Environment=PORT=4998
+ExecStartPre=/usr/bin/npm install
+ExecStart=/usr/bin/node excel.js
+ExecReload=/bin/kill -HUP
+KillMode=process
+Restart=always
+User=worker
+
+[Install]
+WantedBy=multi-user.target

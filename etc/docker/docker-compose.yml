@@ -1,0 +1,44 @@
+version: "3.9"
+
+networks:
+  default:
+    name: ${SYS}-${FOLDER}-network
+
+volumes:
+  db-data:
+    name: ${SYS}-${FOLDER}-db
+
+services:
+
+  db:
+    image: postgres:15
+    container_name: ${SYS}-${FOLDER}-db
+    restart: unless-stopped
+    shm_size: 256m
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./initdb.sh:/docker-entrypoint-initdb.d/initdb.sh:ro
+      - db-data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      #context: ../..
+      #dockerfile: etc/docker/Dockerfile
+      args:
+        SYS: ${SYS}
+        ENV: prod
+        FOLDER: ${FOLDER}
+        BACKEND_REPO: ${BACKEND_REPO}
+        BACKEND_BRANCH: ${BACKEND_BRANCH}
+        BACKEND_PORT: ${BACKEND_PORT}
+    container_name: ${SYS}-${FOLDER}-backend
+    restart: unless-stopped
+    depends_on:
+      - db
+    env_file:
+      - ./.env
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
