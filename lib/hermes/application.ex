@@ -18,25 +18,13 @@ defmodule Hermes.Application do
       # start scheduler
       Scheduler,
       # start http endpoint
-      Plug.Cowboy.child_spec(
-        scheme: :http,
+      {Bandit,
         plug: Web.Server,
-        # see https://hexdocs.pm/plug_cowboy/Plug.Cowboy.html#module-options
-        options: [
-          ip: case :inet.parse_address(String.to_charlist(Util.config(:hermes, [:web, :ip], "127.0.0.1"))) do
-            {:ok, ip} -> ip
-          end,
-          port: Util.config(:hermes, [:web, :port]),
-          compress: true,
-          # NB: Plug punts on websockets by default (?) so we have to provide custom dispatcher
-          dispatch: [
-            {:_, [
-              {"/ws", Web.WebSocket, handler: Web.WebSocket.Impl},
-              {:_, Plug.Cowboy.Handler, {Web.Server, []}}
-            ]}
-          ],
-        ]
-      ),
+        ip: case :inet.parse_address(String.to_charlist(Util.config!(:hermes, [:web, :ip]))) do
+          {:ok, ip} -> ip
+        end,
+        port: Util.config!(:hermes, [:web, :port]),
+      },
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

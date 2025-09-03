@@ -6,7 +6,7 @@ defmodule Repo.Entity do
   import Util.Guards
 
   defmacro __using__(options \\ []) do
-    quote location: :keep do
+    quote generated: true, location: :keep do
       @behaviour Repo.Entity
       import Util.Guards
       alias unquote(options[:repo])

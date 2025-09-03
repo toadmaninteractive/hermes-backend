@@ -526,6 +526,10 @@ defmodule Igor do
 
   defmodule Http do
 
+    defmodule BadRequestError do
+      defexception error: "invalid_json", message: "Could not process the request due to client error", plug_status: 400
+    end
+
     defmodule HttpError do
 
       defexception [:status_code, :body, :headers]
@@ -705,14 +709,14 @@ defmodule Igor do
           Logger.emergency("rpc_exc: #{method}: #{Elixir.Exception.format(:error, e, [])}", data: %{exception: e, stacktrace: stacktrace}, domain: [:rpc])
           %InternalError{}
         # is_map_key(e, :message) and is_binary(e.message) ->
-        #   Logger.warn("rpc_err: #{e.message}", data: %{method: method, exception: e}, domain: [:rpc])
+        #   Logger.warning("rpc_err: #{e.message}", data: %{method: method, exception: e}, domain: [:rpc])
         #   e
         # true ->
-        #   Logger.warn("rpc_err", data: %{method: method, exception: e}, domain: [:rpc])
+        #   Logger.warning("rpc_err", data: %{method: method, exception: e}, domain: [:rpc])
         #   e
         true ->
-          # Logger.warn("rpc_err: #{Elixir.Exception.format(:error, e, [])}", data: %{method: method, exception: e}, domain: [:rpc])
-          Logger.warn("rpc_err: #{method}: #{Elixir.Exception.format(:error, e, [])}", data: %{exception: e}, domain: [:rpc])
+          # Logger.warning("rpc_err: #{Elixir.Exception.format(:error, e, [])}", data: %{method: method, exception: e}, domain: [:rpc])
+          Logger.warning("rpc_err: #{method}: #{Elixir.Exception.format(:error, e, [])}", data: %{exception: e}, domain: [:rpc])
           e
       end
       e = wrap(e)
@@ -751,7 +755,7 @@ defmodule Igor do
 #           Logger.emergency("rpc_exc: #{Elixir.Exception.format(:error, e, [])}", data: %{method: method, exception: e, stacktrace: stacktrace}, domain: [:rpc])
 #           %DataProtocol.InternalServerError{}
 #         is_map_key(e, :message) and is_binary(e.message) ->
-#           Logger.warn("rpc_err: #{e.message}", data: %{method: method, exception: e}, domain: [:rpc])
+#           Logger.warning("rpc_err: #{e.message}", data: %{method: method, exception: e}, domain: [:rpc])
 #           e
 #         true ->
 #           %{error: inspect(e)}

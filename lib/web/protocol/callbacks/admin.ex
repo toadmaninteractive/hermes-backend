@@ -167,6 +167,7 @@ defmodule WebProtocol.HermesAdminService.Impl do
   do
     unless Hermes.can_login?(session), do: raise DataProtocol.ForbiddenError
     raise "not yet implemented"
+    "error"
   end
 
   # ----------------------------------------------------------------------------
@@ -199,6 +200,7 @@ defmodule WebProtocol.HermesAdminService.Impl do
   do
     unless Hermes.can_login?(session), do: raise DataProtocol.ForbiddenError
     raise "not yet implemented"
+    "error"
   end
 
   # ----------------------------------------------------------------------------
@@ -222,6 +224,7 @@ defmodule WebProtocol.HermesAdminService.Impl do
   do
     unless Hermes.can_login?(session), do: raise DataProtocol.ForbiddenError
     raise "not yet implemented"
+    "error"
   end
 
   # ----------------------------------------------------------------------------
@@ -248,6 +251,7 @@ defmodule WebProtocol.HermesAdminService.Impl do
   do
     unless Hermes.can_login?(session), do: raise DataProtocol.ForbiddenError
     raise "not yet implemented"
+    "error"
   end
 
   # ----------------------------------------------------------------------------
@@ -271,6 +275,7 @@ defmodule WebProtocol.HermesAdminService.Impl do
   do
     unless Hermes.can_login?(session), do: raise DataProtocol.ForbiddenError
     raise "not yet implemented"
+    "error"
   end
 
   #-----------------------------------------------------------------------------
@@ -381,6 +386,7 @@ defmodule WebProtocol.HermesAdminService.Impl do
   do
     unless Hermes.can_login?(session), do: raise DataProtocol.ForbiddenError
     raise "not yet implemented"
+    "error"
   end
 
   # ----------------------------------------------------------------------------
@@ -413,6 +419,7 @@ defmodule WebProtocol.HermesAdminService.Impl do
   do
     unless Hermes.can_login?(session), do: raise DataProtocol.ForbiddenError
     raise "not yet implemented"
+    "error"
   end
 
   # ----------------------------------------------------------------------------
@@ -436,6 +443,7 @@ defmodule WebProtocol.HermesAdminService.Impl do
   do
     unless Hermes.can_login?(session), do: raise DataProtocol.ForbiddenError
     raise "not yet implemented"
+    "error"
   end
 
   # ----------------------------------------------------------------------------
@@ -462,6 +470,7 @@ defmodule WebProtocol.HermesAdminService.Impl do
   do
     unless Hermes.can_login?(session), do: raise DataProtocol.ForbiddenError
     raise "not yet implemented"
+    "error"
   end
 
   # ----------------------------------------------------------------------------
@@ -485,6 +494,7 @@ defmodule WebProtocol.HermesAdminService.Impl do
   do
     unless Hermes.can_login?(session), do: raise DataProtocol.ForbiddenError
     raise "not yet implemented"
+    "error"
   end
 
   #-----------------------------------------------------------------------------

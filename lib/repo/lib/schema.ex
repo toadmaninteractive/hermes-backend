@@ -1,7 +1,7 @@
 defmodule Repo.Schema do
 
   defmacro __using__(_) do
-    quote do
+    quote generated: true do
       use Ecto.Schema
 
       import Ecto.Query, only: [from: 2]

@@ -49,7 +49,7 @@ defmodule WebProtocol.HermesVismaService.Impl do
     (is_binary(api_key) or api_key === nil)
   do
     office = Hermes.get_office!(office_id)
-    if api_key !== Util.config(:hermes, [:visma, :offices, office.name, :api_key]), do: raise DataProtocol.ForbiddenError
+    if api_key !== Util.config!(:hermes, [:visma, :offices, office.name, :api_key]), do: raise DataProtocol.ForbiddenError
     body = Visma.report_for_year_month_office(year, month, office_id, omit_ids: omit_ids, omit_uids: omit_uids, pretty: pretty)
       |> Igor.Json.pack_value({:list, {:custom, VismaProtocol.VismaWeekEntry}})
       |> Jason.encode!(pretty: [indent: "    "])
@@ -132,7 +132,7 @@ defmodule WebProtocol.HermesVismaService.Impl do
         row_count = columns |> Enum.max_by(& length(&1)) |> length()
         rows = columns
           |> Enum.map(& &1 ++ List.duplicate(nil, row_count - length(&1)))
-          |> List.zip()
+          |> Enum.zip()
           |> Enum.map(&Tuple.to_list/1)
         # TODO: use https://github.com/dashbitco/nimble_csv ?
         body = rows
@@ -167,7 +167,7 @@ defmodule WebProtocol.HermesVismaService.Impl do
     is_binary(api_key)
   do
     office = Hermes.get_office!(office_id)
-    if api_key !== Util.config(:hermes, [:visma, :offices, office.name, :api_key]), do: raise DataProtocol.ForbiddenError
+    if api_key !== Util.config!(:hermes, [:visma, :offices, office.name, :api_key]), do: raise DataProtocol.ForbiddenError
     Visma.report_for_year_month_office_excel(year, month, office_id)
   end
 
@@ -205,13 +205,13 @@ defmodule WebProtocol.HermesVismaService.Impl do
     office = Hermes.get_office!(office_id)
     allowed = cond do
       Hermes.can_login?(session) -> true
-      api_key === Util.config(:hermes, [:visma, :offices, office.name, :api_key]) -> true
+      api_key === Util.config!(:hermes, [:visma, :offices, office.name, :api_key]) -> true
     end
     unless allowed, do: raise DataProtocol.ForbiddenError
     data = Visma.report_for_year_month_office_excel(year, month, office_id, omit_ids: omit_ids, omit_uids: omit_uids)
       |> Igor.Json.pack_value({:custom, VismaProtocol.ExcelTimeOffReport})
       |> Igor.Json.encode!
-    url = Application.get_env(:hermes, :visma)[:xlsx_generator]
+    url = Util.config!(:hermes, [:visma, :xlsx_generator])
     body =  case HTTPoison.post(url, data, [{"content-type", "application/json"}], []) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         body

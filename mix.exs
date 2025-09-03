@@ -5,7 +5,7 @@ defmodule Hermes.MixProject do
     [
       app: :hermes,
       version: "0.1.0",
-      elixir: "~> 1.11",
+      elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
@@ -25,15 +25,16 @@ defmodule Hermes.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:jason, "~> 1.0"},
-      {:plug_cowboy, "~> 2.0"},
+      {:jason, "~> 1.4"},
+      {:bandit, "~> 1.8"},
       {:exldap, "~> 0.6"},
-      {:ecto_sql, "~> 3.4"},
+      {:ecto_sql, "~> 3.13"},
       {:ecto_enum, "~> 1.4"},
       {:postgrex, ">= 0.0.0"},
-      {:httpoison, "~> 1.8"},
-      {:quantum, "~> 3.0"},
+      {:httpoison, "~> 2.2"},
+      {:quantum, "~> 3.5"},
       {:logger_file_backend, "~> 0.0.12"},
+      {:yaml_elixir, "~> 2.11"},
     ]
   end
 

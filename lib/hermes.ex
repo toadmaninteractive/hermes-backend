@@ -1876,7 +1876,7 @@ defmodule Hermes do
     require Logger
 
     # fetch groups from LDAP
-    {:ok, new_groups} = Auth.Ldap.groups()
+    new_groups = Auth.Ldap.groups()
     group_map = new_groups
       |> Map.new(fn %{name: name} -> {name |> String.downcase, name} end)
     new_groups_set = new_groups
@@ -1907,12 +1907,12 @@ defmodule Hermes do
       Group.update(group, is_deleted: true)
     end
     # set superadmin group
-    superadmin_group = Application.fetch_env!(:hermes, :access)[:admin_group]
+    superadmin_group = Util.config!(:hermes, [:access, :admin_group])
     Logger.info("Setting superadmin Group: #{superadmin_group}")
     Group.set_superadmin(superadmin_group)
 
     # fetch users from LDAP
-    {:ok, new_users} = Auth.Ldap.users()
+    new_users = Auth.Ldap.users()
     user_map = new_users
       |> Map.new(fn %{dn: dn} = attrs -> {dn, Util.take(attrs, [
           username: [:uid],
@@ -1960,13 +1960,6 @@ defmodule Hermes do
       end
     end
 
-    # users
-    #   |> Enum.map(& Util.take(&1, [
-    #     username: [:uid],
-    #     email: [:mail],
-    #     name: [:cn]
-    #   ]))
-    #   |> User.insert(on_conflict: {:replace, ~w(email name office_id)a}, conflict_target: :username)
     # TODO: FIXME: reconsider this crap!
     # TODO: implement membership revoking
     for %{name: name, members: members} <- new_groups do
@@ -2009,7 +2002,7 @@ defmodule Hermes do
       ensure_cells()
     end
 
-    Hermes.sync_bamboo()
+    #Hermes.sync_bamboo()
   end
 
   # ----------------------------------------------------------------------------
@@ -2018,7 +2011,7 @@ defmodule Hermes do
     require Logger
 
     # honor eg7
-    users = Auth.Bamboo.request_custom_report(Util.config(:hermes, [:bamboo, :eg7]))
+    users = Auth.Bamboo.request_custom_report(Util.config!(:hermes, [:bamboo, :eg7]))
     for location <- (users.employees
       |> Enum.map(& Map.get(&1, :location))
       |> Enum.filter(& &1 !== nil)
@@ -2038,7 +2031,7 @@ defmodule Hermes do
           name: Map.get(employee, :display_name)
         }) do
           [] ->
-Logger.warn("Not mapped EG7 employee to user: #{employee.display_name}")
+Logger.warning("Not mapped EG7 employee to user: #{employee.display_name}")
             {Map.get(employee, :id), {employee, nil}}
           [user | _] ->
             {Map.get(employee, :id), {employee, user}}
@@ -2048,13 +2041,13 @@ Logger.warn("Not mapped EG7 employee to user: #{employee.display_name}")
     for {_eid, {employee, user}} <- map_id_to_user do
       case user do
         nil ->
-# Logger.warn("Not mapped employee to user: #{employee.display_name}")
+# Logger.warning("Not mapped employee to user: #{employee.display_name}")
           :skip
         user ->
           # update email, office etc.
           office = Office.all(name: employee.location) |> List.first
 if office === nil do
-Logger.warn("Not found office for location: #{employee.location}")
+Logger.warning("Not found office for location: #{employee.location}")
 end
           changes = Util.take(employee, [
             email: :work_email,
@@ -2070,7 +2063,7 @@ end
           # try to update hierarchy
           case Map.get(employee, :supervisor_e_id) do
             nil ->
-# Logger.warn("Not found supervisor for employee: #{employee.display_name}")
+# Logger.warning("Not found supervisor for employee: #{employee.display_name}")
               :skip
             seid ->
               case Map.get(map_id_to_user, seid) do
@@ -2085,7 +2078,7 @@ end
     end
 
     # # honor amg
-    # users = Auth.Bamboo.request_custom_report(Util.config(:hermes, [:bamboo, :amg]))
+    # users = Auth.Bamboo.request_custom_report(Util.config!(:hermes, [:bamboo, :amg]))
     # amg_office_name = "Antimatter Games"
     # amg_office_id = case Office.all(name: amg_office_name) do
     #   [] ->
@@ -2158,13 +2151,13 @@ end
     get_timeoffs(date1, date2)
   end
   def get_timeoffs(date1, date2) do
-    # bamboo_timeoffs = Util.config(:hermes, [:bamboo])
+    # bamboo_timeoffs = Util.config!(:hermes, [:bamboo])
     #   |> Enum.reduce([], fn {_, config}, acc ->
     #     acc ++ fetch_bamboo_timeoffs(config, date1, date2)
     #   end)
-    # hrvey_timeoffs = fetch_hrvey_timeoffs(Util.config(:hermes, [:hrvey]), date1, date2)
+    # hrvey_timeoffs = fetch_hrvey_timeoffs(Util.config!(:hermes, [:hrvey]), date1, date2)
     # bamboo_timeoffs ++ hrvey_timeoffs
-    fetch_hrvey_timeoffs(Util.config(:hermes, [:hrvey]), date1, date2)
+    fetch_hrvey_timeoffs(Util.config!(:hermes, [:hrvey]), date1, date2)
   end
 
   def apply_timeoffs(year, month, timeoffs) when is_integer(year) and is_integer(month) and is_list(timeoffs) do
@@ -2233,7 +2226,7 @@ end
       |> Enum.filter(& Map.get(timeoff_types, &1) === nil)
     if length(missing_timeoff_types) != 0 do
       require Logger
-      Logger.warn("The following timeoffs won't be applied: #{inspect missing_timeoff_types}! Consider mapping them to known timeoff types: #{inspect timeoff_types}")
+      Logger.warning("The following timeoffs won't be applied: #{inspect missing_timeoff_types}! Consider mapping them to known timeoff types: #{inspect timeoff_types}")
     end
     timeoffs
       |> Enum.map(fn x -> x.time_off |> Enum.map(& {employees[x.employee_id] || employees[x.email] || Map.get(employees, x.name, nil), Map.get(timeoff_types, &1.type, nil), &1.date, &1.date}) end)
