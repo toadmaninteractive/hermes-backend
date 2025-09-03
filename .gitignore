@@ -34,3 +34,5 @@ node_modules/
 .env
 
 /.elixir_ls
+
+config.yaml

@@ -1,52 +1,37 @@
 import Config
 
+# merge json config
+
+#conf = File.read!(System.get_env("CONFIG_PATH", "config.json")) |> Jason.decode!(keys: :atoms)
+conf = System.get_env("CONFIG_PATH", "config.yaml")
+  |> YamlElixir.read_from_file!()
+  |> Map.get("hermes")
+  |> ConfigProtocol.Config.from_json!()
+
+  # TODO?: is protocol capable of parsing record into keyword list?
+  |> Map.from_struct()
+  |> Enum.map(fn
+    {k, v} when is_struct(v) -> {k, v |> Map.from_struct() |> Map.to_list()}
+    {k, v} when is_map(v) -> {k, v |> Map.to_list()}
+    {k, v} -> {k, v}
+  end)
+  |> update_in([:web, :session], & &1 |> Map.from_struct() |> Map.to_list())
+  |> IO.inspect(label: "CONF")
+
 # database
 
-config :hermes, Repo,
-  username: System.fetch_env!("DB_USER"),
-  password: System.fetch_env!("DB_PASS"),
-  database: System.fetch_env!("DB_NAME"),
-  hostname: System.fetch_env!("DB_HOST"),
-  port: System.get_env("DB_PORT")
+config :hermes, Repo, conf[:db]
 
 # web server
 
-cors_origins = Regex.split(~r{\s*,\s*}, System.fetch_env!("FRONTEND_SERVER_CORS"), trim: true)
-config :hermes, :web,
-  ip: System.fetch_env!("BACKEND_IP"),
-  port: System.fetch_env!("BACKEND_PORT") |> String.to_integer,
-  cors: [
-    fallback_origin: cors_origins |> List.first,
-    allowed_origins: cors_origins
-  ],
-  session: [
-    secret: System.fetch_env!("BACKEND_SESSION_SECRET"),
-    encryption_salt: System.fetch_env!("BACKEND_SESSION_ENCRYPTION_SALT"),
-    signing_salt: System.fetch_env!("BACKEND_SESSION_SIGNING_SALT")
-  ],
-  api_keys: System.fetch_env!("BACKEND_API_KEYS") |> String.split(",")
+config :hermes, :web, conf[:web]
 
 # misc
 
-config :exldap, :settings,
-  server: System.fetch_env!("LDAP_HOST"),
-  port: System.fetch_env!("LDAP_PORT") |> String.to_integer,
-  ssl: System.fetch_env!("LDAP_SSL") === "true",
-  sslopts: [verify: :verify_none],
-  user_dn: System.fetch_env!("LDAP_USER"),
-  password: System.fetch_env!("LDAP_PASS"),
-  base: System.fetch_env!("LDAP_BASE")
+config :exldap, :settings, conf[:ldap]
 
-config :hermes, :access,
-  auth_realm: :yourcompany,
-  admin_group: System.fetch_env!("BACKEND_ADMIN_GROUP"),
-  local_admin: false
-
-config :hermes, :visma,
-  # TODO: move to env?
-  offices: %{
-    "Main" => [
-      api_key: "CHANGE_ME"
-    ],
-  },
-  xlsx_generator: System.fetch_env!("BACKEND_XLSX_GENERATOR")
+config :hermes, :access, conf[:access]
+config :hermes, :bamboo, conf[:bamboo]
+config :hermes, :visma, conf[:visma]
+config :hermes, :junipeer, conf[:junipeer]
+config :hermes, :hrvey, conf[:hrvey]

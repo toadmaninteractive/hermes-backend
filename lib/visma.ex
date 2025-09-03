@@ -184,7 +184,7 @@ defmodule Visma do
   # ----------------------------------------------------------------------------
 
   def submit_visma_report(country, company_id, report) when is_binary(country) and is_binary(company_id) do
-    config = Application.fetch_env!(:hermes, :junipeer)
+    config = Util.config!(:hermes, [:junipeer])
     authorization = "Basic " <> Base.encode64("#{config[:username]}:#{config[:password]}")
     payload = %JunipeerProtocol.ReportEnvelope{
       country: country,
@@ -195,7 +195,7 @@ defmodule Visma do
   end
 
   def get_visma_report_status(task_id) when is_binary(task_id) do
-    config = Application.fetch_env!(:hermes, :junipeer)
+    config = Util.config!(:hermes, [:junipeer])
     authorization = "Basic " <> Base.encode64("#{config[:username]}:#{config[:password]}")
     JunipeerProtocol.JunipeerApi.get_visma_report_status(task_id, authorization)
   end

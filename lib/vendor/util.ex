@@ -53,6 +53,13 @@ defmodule Util do
     Enum.reduce(path, Application.get_env(app, key), fn step, acc -> acc[step] end) || default
   end
 
+  def config!(app, [key | path]) do
+    path |> Enum.reduce(Application.fetch_env!(app, key), fn
+      step, acc when is_struct(acc) -> Map.fetch!(acc, step)
+      step, acc -> Access.fetch!(acc, step)
+    end)
+  end
+
   # ----------------------------------------------------------------------------
   # internal functions
   # ----------------------------------------------------------------------------
@@ -258,7 +265,7 @@ defmodule Util.Retry do
       rescue
         e ->
           if e.__struct__ in opts[:exceptions] do
-            {:cont, {:error, {:exception, e.message}}}
+            {:cont, {:error, {:exception, Exception.message(e)}}}
           else
             reraise e, __STACKTRACE__
           end

@@ -14,11 +14,11 @@ defmodule Web.Server do
   # cors
   plug :cors
   # logger
-  plug :trace, builder_opts()
+  plug :trace, copy_opts_to_assign: [:log]
 
   # session
   plug :put_secret_key_base
-  plug Plug.Session, Util.config(@app, [:web, :session])
+  plug Plug.Session, Util.config!(@app, [:web, :session])
   plug :extract_session
 
   # plug :put_context
@@ -58,14 +58,12 @@ defmodule Web.Server do
   end
 
   defp put_secret_key_base(conn, _) do
-    put_in conn.secret_key_base, Util.config(@app, [:web, :session, :secret])
+    put_in conn.secret_key_base, Util.config!(@app, [:web, :session, :secret])
   end
 
   defp extract_session(conn, _opts) do
-    conn = conn
-      |> fetch_session()
-    conn
-      |> assign(:session, get_session(conn, :api))
+    conn = fetch_session(conn)
+    assign(conn, :session, get_session(conn, :api))
   end
 
   # TODO: replace with telemetry
@@ -93,12 +91,12 @@ defmodule Web.Server do
   #-----------------------------------------------------------------------------
 
   defp cors_origin(conn) do
-    cors = Util.config(@app, [:web, :cors])
+    cors = Util.config!(@app, [:web, :cors])
     origin = to_string(get_req_header(conn, "origin"))
-    if origin in cors[:allowed_origins] do
+    if origin in cors.allowed_origins do
       origin
     else
-      cors[:fallback_origin]
+      cors.fallback_origin
     end
   end
 

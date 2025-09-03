@@ -187,6 +187,7 @@ defmodule WebProtocol.HermesAuthService.Impl do
     is_integer(project_id)
   do
     raise "not yet implemented"
+    "error"
   end
 
   #-----------------------------------------------------------------------------
