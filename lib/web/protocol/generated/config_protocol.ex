@@ -420,24 +420,21 @@ defmodule ConfigProtocol do
 
   defmodule Visma do
 
-    @enforce_keys [:xlsx_generator]
-    defstruct [offices: %{}, xlsx_generator: nil]
+    defstruct [offices: %{}]
 
-    @type t :: %Visma{offices: %{String.t() => ConfigProtocol.VismaOffice.t()}, xlsx_generator: String.t()}
+    @type t :: %Visma{offices: %{String.t() => ConfigProtocol.VismaOffice.t()}}
 
     @spec from_json!(Igor.Json.json()) :: t()
     def from_json!(json) do
       offices = Igor.Json.parse_field!(json, "offices", {:map, :string, {:custom, ConfigProtocol.VismaOffice}}, %{})
-      xlsx_generator = Igor.Json.parse_field!(json, "xlsx_generator", :string)
-      %Visma{offices: offices, xlsx_generator: xlsx_generator}
+      %Visma{offices: offices}
     end
 
     @spec to_json!(t()) :: Igor.Json.json()
     def to_json!(args) do
-      %{offices: offices, xlsx_generator: xlsx_generator} = args
+      %{offices: offices} = args
       %{
-        "offices" => Igor.Json.pack_value(offices, {:map, :string, {:custom, ConfigProtocol.VismaOffice}}),
-        "xlsx_generator" => Igor.Json.pack_value(xlsx_generator, :string)
+        "offices" => Igor.Json.pack_value(offices, {:map, :string, {:custom, ConfigProtocol.VismaOffice}})
       }
     end
 

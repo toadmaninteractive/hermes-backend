@@ -237,83 +237,6 @@ defmodule VismaProtocol.HermesVismaService do
 
   end
 
-  defmodule TimeOffExcelReport do
-
-    require Logger
-    import Plug.Conn
-
-    def init(opts), do: opts
-
-    def call(%{method: method} = conn, _opts), do: handle_method(method, conn)
-
-    defp handle_method("GET", conn) do
-      try do
-        conn = fetch_query_params(conn)
-        year = Igor.Json.parse_field!(conn.path_params, "year", :int)
-        month = Igor.Json.parse_field!(conn.path_params, "month", :int)
-        office_id = Igor.Json.parse_field!(conn.path_params, "office_id", :long)
-        omit_ids = Igor.Json.parse_field!(conn.query_params, "omit_ids", {:option, {:list, ",", :long}})
-        omit_uids = Igor.Json.parse_field!(conn.query_params, "omit_uids", {:option, {:list, ",", :string}})
-        api_key = Igor.Json.parse_field!(%{"x-api-key" => List.first(get_req_header(conn, "x-api-key"))}, "x-api-key", {:option, :string})
-        {conn, year, month, office_id, omit_ids, omit_uids, api_key}
-      rescue
-        e in Igor.DecodeError ->
-          body = Igor.Json.encode!(%{"error" => e.message})
-          conn
-              |> put_resp_content_type("application/json")
-              |> send_resp(400, body)
-        e in Igor.Http.BadRequestError ->
-          body = Igor.Json.encode!(%{"error" => e.message})
-          conn
-              |> put_resp_content_type("application/json")
-              |> send_resp(400, body)
-      else
-        {conn, year, month, office_id, omit_ids, omit_uids, api_key} ->
-          handle_get(conn, year, month, office_id, omit_ids, omit_uids, api_key)
-      end
-    end
-    defp handle_method(_, conn) do
-      conn
-        |> put_resp_header("allow", "GET")
-        |> send_resp(405, "")
-    end
-
-    defp handle_get(conn, year, month, office_id, omit_ids, omit_uids, api_key) do
-      Logger.debug("rpc_req", data: %{method: "WebProtocol.HermesVismaService.Impl.get_time_off_monthly_report_for_office_excel", args: [year, month, office_id, omit_ids, omit_uids, api_key, get_session(conn, :api)]}, domain: [:rpc])
-      {disposition, response_content} = WebProtocol.HermesVismaService.Impl.get_time_off_monthly_report_for_office_excel(year, month, office_id, omit_ids, omit_uids, api_key, get_session(conn, :api))
-      Logger.debug("rpc_res", data: %{method: "WebProtocol.HermesVismaService.Impl.get_time_off_monthly_report_for_office_excel", result: {disposition, response_content}}, domain: [:rpc])
-      body = response_content
-      conn
-        |> put_resp_content_type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        |> put_resp_header("content-disposition", disposition)
-        |> send_resp(200, body)
-    rescue
-      e in DataProtocol.ForbiddenError ->
-        Logger.notice("rpc_exc", data: %{method: "WebProtocol.HermesVismaService.Impl.get_time_off_monthly_report_for_office_excel", exception: e}, domain: [:rpc])
-        body = e
-          |> Igor.Json.pack_value({:custom, DataProtocol.ForbiddenError})
-          |> Igor.Json.encode!
-        conn
-          |> put_resp_content_type("application/json")
-          |> send_resp(403, body)
-      e in DataProtocol.NotFoundError ->
-        Logger.notice("rpc_exc", data: %{method: "WebProtocol.HermesVismaService.Impl.get_time_off_monthly_report_for_office_excel", exception: e}, domain: [:rpc])
-        body = e
-          |> Igor.Json.pack_value({:custom, DataProtocol.NotFoundError})
-          |> Igor.Json.encode!
-        conn
-          |> put_resp_content_type("application/json")
-          |> send_resp(404, body)
-      e ->
-        Logger.error("rpc_exc", data: %{method: "WebProtocol.HermesVismaService.Impl.get_time_off_monthly_report_for_office_excel", exception: e, stacktrace: __STACKTRACE__}, domain: [:rpc])
-        body = Igor.Json.encode!(%{"error" => inspect(e)})
-        conn
-          |> put_resp_content_type("application/json")
-          |> send_resp(500, body)
-    end
-
-  end
-
   @doc """
   Get Visma monthly report for an office
   """
@@ -328,10 +251,5 @@ defmodule VismaProtocol.HermesVismaService do
   Get timeoff monthly report for an office
   """
   @callback get_time_off_monthly_report_for_office(integer, integer, integer, String.t()) :: VismaProtocol.ExcelTimeOffReport.t()
-
-  @doc """
-  Get timeoff monthly report for an office in XSLX format
-  """
-  @callback get_time_off_monthly_report_for_office_excel(integer, integer, integer, [integer] | nil, [String.t()] | nil, String.t() | nil, session :: any()) :: {String.t(), binary}
 
 end
