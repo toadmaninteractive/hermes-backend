@@ -13,7 +13,6 @@ defmodule WebProtocol.HermesVismaService.Impl do
   def router() do
     quote do
       match "/api/timeoff/report/monthly/:year/:month/office/:office_id", to: VismaProtocol.HermesVismaService.TimeOffReport
-      match "/api/timeoff/report/monthly/:year/:month/office/:office_id/excel", to: VismaProtocol.HermesVismaService.TimeOffExcelReport
       match "/api/visma/report/monthly/by-role/:year/:month/office/:office_id", to: VismaProtocol.HermesVismaService.ReportByRole
       match "/api/visma/report/monthly/:year/:month/office/:office_id", to: VismaProtocol.HermesVismaService.Report
     end
@@ -120,40 +119,6 @@ defmodule WebProtocol.HermesVismaService.Impl do
     is_integer(month) and
     is_integer(office_id) and
     is_binary(api_key)
-  do
-    raise "not_yet_implemented"
-  end
-
-  # ----------------------------------------------------------------------------
-
-  @doc """
-  Get timeoff monthly report for an office in XSLX format
-  """
-  @spec get_time_off_monthly_report_for_office_excel(
-    year :: integer,
-    month :: integer,
-    office_id :: integer,
-    omit_ids :: [integer] | nil,
-    omit_uids :: [String.t()] | nil,
-    api_key :: String.t() | nil,
-    session :: any()
-  ) :: {String.t(), binary}
-  @impl true
-  def get_time_off_monthly_report_for_office_excel(
-    year,
-    month,
-    office_id,
-    omit_ids,
-    omit_uids,
-    api_key,
-    session
-  ) when
-    is_integer(year) and
-    is_integer(month) and
-    is_integer(office_id) and
-    (is_list(omit_ids) or omit_ids === nil) and
-    (is_list(omit_uids) or omit_uids === nil) and
-    (is_binary(api_key) or api_key === nil)
   do
     raise "not_yet_implemented"
   end

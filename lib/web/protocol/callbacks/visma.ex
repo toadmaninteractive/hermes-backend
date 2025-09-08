@@ -9,7 +9,6 @@ defmodule WebProtocol.HermesVismaService.Impl do
   def router() do
     quote do
       match "/api/timeoff/report/monthly/:year/:month/office/:office_id", to: VismaProtocol.HermesVismaService.TimeOffReport, assigns: %{auth_by_api_key: true}
-      match "/api/timeoff/report/monthly/:year/:month/office/:office_id/excel", to: VismaProtocol.HermesVismaService.TimeOffExcelReport, assigns: %{auth_by_api_key: true}
       match "/api/visma/report/monthly/by-role/:year/:month/office/:office_id", to: VismaProtocol.HermesVismaService.ReportByRole
       match "/api/visma/report/monthly/:year/:month/office/:office_id", to: VismaProtocol.HermesVismaService.Report, assigns: %{auth_by_api_key: true}
     end
@@ -169,60 +168,6 @@ defmodule WebProtocol.HermesVismaService.Impl do
     office = Hermes.get_office!(office_id)
     if api_key !== Util.config!(:hermes, [:visma, :offices, office.name, :api_key]), do: raise DataProtocol.ForbiddenError
     Visma.report_for_year_month_office_excel(year, month, office_id)
-  end
-
-  # ----------------------------------------------------------------------------
-
-  @doc """
-  Get timeoff monthly report for an office in XSLX format
-  """
-  @spec get_time_off_monthly_report_for_office_excel(
-    year :: integer,
-    month :: integer,
-    office_id :: integer,
-    omit_ids :: [integer] | nil,
-    omit_uids :: [String.t()] | nil,
-    api_key :: String.t() | nil,
-    session :: any()
-  ) :: {String.t(), binary}
-  @impl true
-  def get_time_off_monthly_report_for_office_excel(
-    year,
-    month,
-    office_id,
-    omit_ids,
-    omit_uids,
-    api_key,
-    session
-  ) when
-    is_integer(year) and
-    is_integer(month) and
-    is_integer(office_id) and
-    (is_list(omit_ids) or omit_ids === nil) and
-    (is_list(omit_uids) or omit_uids === nil) and
-    (is_binary(api_key) or api_key === nil)
-  do
-    office = Hermes.get_office!(office_id)
-    allowed = cond do
-      Hermes.can_login?(session) -> true
-      api_key === Util.config!(:hermes, [:visma, :offices, office.name, :api_key]) -> true
-    end
-    unless allowed, do: raise DataProtocol.ForbiddenError
-    data = Visma.report_for_year_month_office_excel(year, month, office_id, omit_ids: omit_ids, omit_uids: omit_uids)
-      |> Igor.Json.pack_value({:custom, VismaProtocol.ExcelTimeOffReport})
-      |> Igor.Json.encode!
-    url = Util.config!(:hermes, [:visma, :xlsx_generator])
-    body =  case HTTPoison.post(url, data, [{"content-type", "application/json"}], []) do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        body
-      {:ok, %HTTPoison.Response{status_code: status_code, body: response_body}} ->
-        raise %Igor.Http.HttpError{status_code: status_code, body: response_body}
-      # {:error, %HTTPoison.Error{reason: :econnrefused}} ->
-      #   raise %Igor.Http.HttpError{status_code: 502}
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        raise %Igor.Http.HttpError{status_code: 500, body: reason}
-    end
-    {"attachment; filename=\"output.xlsx\"", body}
   end
 
   #-----------------------------------------------------------------------------

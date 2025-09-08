@@ -2002,7 +2002,7 @@ defmodule Hermes do
       ensure_cells()
     end
 
-    #Hermes.sync_bamboo()
+    Hermes.sync_bamboo()
   end
 
   # ----------------------------------------------------------------------------
@@ -2010,110 +2010,11 @@ defmodule Hermes do
   def sync_bamboo(_opts \\ []) do
     require Logger
 
-    # honor eg7
-    users = Auth.Bamboo.request_custom_report(Util.config!(:hermes, [:bamboo, :eg7]))
-    for location <- (users.employees
-      |> Enum.map(& Map.get(&1, :location))
-      |> Enum.filter(& &1 !== nil)
-      |> MapSet.new)
-    do
-      case Office.all(name: location) do
-        [] ->
-          Logger.info("Creating new Office: #{location}")
-          Office.insert(%{name: location})
-        _ -> :skip
-      end
-    end
-    map_id_to_user = users.employees
-      |> Enum.map(fn employee ->
-        case User.all(%{
-          email: Map.get(employee, :work_email),
-          name: Map.get(employee, :display_name)
-        }) do
-          [] ->
-Logger.warning("Not mapped EG7 employee to user: #{employee.display_name}")
-            {Map.get(employee, :id), {employee, nil}}
-          [user | _] ->
-            {Map.get(employee, :id), {employee, user}}
-        end
-      end)
-      |> Enum.into(%{})
-    for {_eid, {employee, user}} <- map_id_to_user do
-      case user do
-        nil ->
-# Logger.warning("Not mapped employee to user: #{employee.display_name}")
-          :skip
-        user ->
-          # update email, office etc.
-          office = Office.all(name: employee.location) |> List.first
-if office === nil do
-Logger.warning("Not found office for location: #{employee.location}")
-end
-          changes = Util.take(employee, [
-            email: :work_email,
-            department: :department,
-            job_title: :job_title,
-            location: :location,
-            office_id: fn _ -> user.office_id || office.id end,
-          ]) |> Enum.filter(fn {_k, v} -> v !== nil end) |> Enum.into(%{})
-
-# Logger.debug("Changing User #{user.username}/#{user.office_id} with: #{inspect(changes)}")
-          {_rc, _} = User.update(user, changes)
-# Logger.debug("Setting Office #{office.id} to user: #{employee.display_name} := #{rc}")
-          # try to update hierarchy
-          case Map.get(employee, :supervisor_e_id) do
-            nil ->
-# Logger.warning("Not found supervisor for employee: #{employee.display_name}")
-              :skip
-            seid ->
-              case Map.get(map_id_to_user, seid) do
-                nil -> :skip
-                {_supervisor_employee, supervisor_user} ->
-                  User.update(user, Util.take(employee, [
-                    supervisor_id: fn _ -> Map.get(supervisor_user || %{}, :id) end,
-                  ]))
-              end
-          end
-      end
-    end
-
-    # # honor amg
-    # users = Auth.Bamboo.request_custom_report(Util.config!(:hermes, [:bamboo, :amg]))
-    # amg_office_name = "Antimatter Games"
-    # amg_office_id = case Office.all(name: amg_office_name) do
-    #   [] ->
-    #     Logger.info("Creating new Office: #{amg_office_name}")
-    #     {:ok, office} = Office.insert(%{name: amg_office_name})
-    #     office.id
-    #   [office] ->
-    #     office.id
-    # end
-    # map_id_to_user = users.employees
-    #   |> Enum.map(& {Map.get(&1, :id), {&1, List.first(User.all(%{email: Map.get(&1, :work_email), name: Map.get(&1, :display_name)}))}})
-    #   |> Enum.into(%{})
-    # for {_eid, {employee, user}} <- map_id_to_user do
-    #   case user do
-    #     nil -> :skip
-    #     user ->
-    #       case Map.get(employee, :supervisor_e_id) do
-    #         nil -> :skip
-    #         seid ->
-    #           case Map.get(map_id_to_user, seid) do
-    #             nil -> :skip
-    #             {_supervisor_employee, supervisor_user} ->
-    #               changes = Util.take(employee, [
-    #                 email: :work_email,
-    #                 department: :department,
-    #                 job_title: :job_title,
-    #                 location: :location,
-    #                 office_id: fn _ -> user.office_id || amg_office_id end,
-    #                 supervisor_id: fn _ -> Map.get(supervisor_user || %{}, :id) end,
-    #               ]) |> Enum.filter(fn {_k, v} -> v !== nil end) |> Enum.into(%{})
-    #               User.update(user, changes)
-    #           end
-    #       end
-    #   end
-    # end
+    #bamboos = Util.config!(:hermes, [:bamboo])
+    #for {_, bamboo} <- bamboos do
+    #  users = Auth.Bamboo.request_custom_report(bamboo)
+    #  ...
+    #end
 
     :ok
   end
