@@ -6,7 +6,7 @@ set SYS=hermes
 set FOLDER=dev
 
 set ERLANG_OTP_VERSION=27.0.1
-set ELIXIR_VERSION=1.17.2
+set ELIXIR_VERSION=1.18.4
 
 set FRONTEND_SERVER_NAME=%SYS%-%FOLDER%.yourcompany.com
 set FRONTEND_SERVER_CORS=https://%FRONTEND_SERVER_NAME%,http://localhost:4200/
