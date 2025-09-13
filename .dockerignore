@@ -1,0 +1,13 @@
+# Dirs
+.elixir_ls
+.git
+.vscode
+deps
+etc
+
+# Files
+.dockerignore
+.gitignore
+config.yaml
+Dockerfile
+*.cmd
