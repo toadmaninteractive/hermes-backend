@@ -13,8 +13,8 @@ config :logger,
   ]
 
 config :logger, :console,
-  level: :warn,
-  level: config_env() == :prod && :warn || :info,
+  level: :warning,
+  level: config_env() == :prod && :warning || :info,
   metadata: [:domain, :data, :request_id],
   format: {Logger.Formatter.Vd, :format},
   truncate: :infinity
