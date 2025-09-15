@@ -35,3 +35,12 @@ config :hermes, :bamboo, conf[:bamboo]
 config :hermes, :visma, conf[:visma]
 config :hermes, :junipeer, conf[:junipeer]
 config :hermes, :hrvey, conf[:hrvey]
+
+# scheduler
+
+config :hermes, Scheduler, jobs: (
+  Util.config!(:hermes, [Scheduler, :jobs]) ++
+  Enum.map(conf[:jobs], fn {name, %{schedule: schedule} = job} ->
+    [name: name, schedule: schedule, task: {job.module && String.to_atom("Elixir.#{job.module}") || Hermes, job.function || name, job.arguments}]
+  end)
+)

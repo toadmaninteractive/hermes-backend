@@ -7,9 +7,9 @@ defmodule ConfigProtocol do
   defmodule Config do
 
     @enforce_keys [:web, :db, :ldap, :access, :bamboo, :hrvey, :junipeer, :visma]
-    defstruct [web: nil, db: nil, ldap: nil, access: nil, bamboo: nil, hrvey: nil, junipeer: nil, visma: nil]
+    defstruct [web: nil, db: nil, ldap: nil, access: nil, jobs: %{}, bamboo: nil, hrvey: nil, junipeer: nil, visma: nil]
 
-    @type t :: %Config{web: ConfigProtocol.Web.t(), db: ConfigProtocol.Db.t(), ldap: ConfigProtocol.Ldap.t(), access: ConfigProtocol.Access.t(), bamboo: %{atom => ConfigProtocol.Bamboo.t()}, hrvey: ConfigProtocol.Hrvey.t(), junipeer: ConfigProtocol.Junipeer.t(), visma: ConfigProtocol.Visma.t()}
+    @type t :: %Config{web: ConfigProtocol.Web.t(), db: ConfigProtocol.Db.t(), ldap: ConfigProtocol.Ldap.t(), access: ConfigProtocol.Access.t(), jobs: %{atom => ConfigProtocol.CronJob.t()}, bamboo: %{atom => ConfigProtocol.Bamboo.t()}, hrvey: ConfigProtocol.Hrvey.t(), junipeer: ConfigProtocol.Junipeer.t(), visma: ConfigProtocol.Visma.t()}
 
     @spec from_json!(Igor.Json.json()) :: t()
     def from_json!(json) do
@@ -17,6 +17,7 @@ defmodule ConfigProtocol do
       db = Igor.Json.parse_field!(json, "db", {:custom, ConfigProtocol.Db})
       ldap = Igor.Json.parse_field!(json, "ldap", {:custom, ConfigProtocol.Ldap})
       access = Igor.Json.parse_field!(json, "access", {:custom, ConfigProtocol.Access})
+      jobs = Igor.Json.parse_field!(json, "jobs", {:map, :atom, {:custom, ConfigProtocol.CronJob}}, %{})
       bamboo = Igor.Json.parse_field!(json, "bamboo", {:map, :atom, {:custom, ConfigProtocol.Bamboo}})
       hrvey = Igor.Json.parse_field!(json, "hrvey", {:custom, ConfigProtocol.Hrvey})
       junipeer = Igor.Json.parse_field!(json, "junipeer", {:custom, ConfigProtocol.Junipeer})
@@ -26,6 +27,7 @@ defmodule ConfigProtocol do
         db: db,
         ldap: ldap,
         access: access,
+        jobs: jobs,
         bamboo: bamboo,
         hrvey: hrvey,
         junipeer: junipeer,
@@ -40,6 +42,7 @@ defmodule ConfigProtocol do
         db: db,
         ldap: ldap,
         access: access,
+        jobs: jobs,
         bamboo: bamboo,
         hrvey: hrvey,
         junipeer: junipeer,
@@ -50,6 +53,7 @@ defmodule ConfigProtocol do
         "db" => ConfigProtocol.Db.to_json!(db),
         "ldap" => ConfigProtocol.Ldap.to_json!(ldap),
         "access" => ConfigProtocol.Access.to_json!(access),
+        "jobs" => Igor.Json.pack_value(jobs, {:map, :atom, {:custom, ConfigProtocol.CronJob}}),
         "bamboo" => Igor.Json.pack_value(bamboo, {:map, :atom, {:custom, ConfigProtocol.Bamboo}}),
         "hrvey" => ConfigProtocol.Hrvey.to_json!(hrvey),
         "junipeer" => ConfigProtocol.Junipeer.to_json!(junipeer),
@@ -309,6 +313,44 @@ defmodule ConfigProtocol do
         "admin_group" => Igor.Json.pack_value(admin_group, :string),
         "local_admin" => Igor.Json.pack_value(local_admin, :boolean)
       }
+    end
+
+  end
+
+  defmodule CronJob do
+
+    @enforce_keys [:schedule]
+    defstruct [schedule: nil, module: nil, function: nil, arguments: []]
+
+    @type t :: %CronJob{schedule: String.t(), module: atom | nil, function: atom | nil, arguments: [Igor.Json.json()]}
+
+    @spec from_json!(Igor.Json.json()) :: t()
+    def from_json!(json) do
+      schedule = Igor.Json.parse_field!(json, "schedule", :string)
+      module = Igor.Json.parse_field!(json, "module", :atom, nil)
+      function = Igor.Json.parse_field!(json, "function", :atom, nil)
+      arguments = Igor.Json.parse_field!(json, "arguments", {:list, :json}, [])
+      %CronJob{
+        schedule: schedule,
+        module: module,
+        function: function,
+        arguments: arguments
+      }
+    end
+
+    @spec to_json!(t()) :: Igor.Json.json()
+    def to_json!(args) do
+      %{
+        schedule: schedule,
+        module: module,
+        function: function,
+        arguments: arguments
+      } = args
+      %{}
+        |> Igor.Json.pack_field("schedule", schedule, :string)
+        |> Igor.Json.pack_field("module", module, :atom)
+        |> Igor.Json.pack_field("function", function, :atom)
+        |> Igor.Json.pack_field("arguments", arguments, {:list, :json})
     end
 
   end
