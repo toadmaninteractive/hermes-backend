@@ -54,9 +54,6 @@ config :hermes, Scheduler,
   overlap: false,
   jobs: [
     migrate: [schedule: "@reboot", task: {Repo, :migrate, []}],
-    sync_ldap: [schedule: "*/10 * * * *", task: {Hermes, :sync_ldap, []}, overlap: false],
-    # sync_timeoffs: [schedule: "*/13 * * * *", task: {Hermes, :sync_timeoffs, []}, overlap: false],
-    prolong_user_assignment: [schedule: "00 01 * * 1-5", task: {Hermes, :prolong_user_assignment, []}, overlap: false],
   ]
 
 #
