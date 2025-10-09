@@ -29,8 +29,8 @@ defmodule Auth.Ldap do
   @spec check(String.t(), String.t()) :: {:ok, user} | {:error, :not_found | :invalid_credentials}
   def check(uid, password) when is_binary(uid) and is_binary(password) do
     with_ldap_do(fn ldap ->
-      base = Util.config!(:exldap, [:settings, :base])
-      case Exldap.search_field(ldap, base, attr_name(:user_id), uid) do
+      base_users = Util.config!(:exldap, [:settings, :base, :users])
+      case Exldap.search_field(ldap, base_users, attr_name(:user_id), uid) do
         {:ok, [%Exldap.Entry{object_name: user_dn} = entry | _]} ->
           case Exldap.verify_credentials(ldap, user_dn, password) do
             :ok -> {:ok, to_user(entry)}
@@ -50,8 +50,8 @@ defmodule Auth.Ldap do
   @spec get(String.t()) :: user | nil
   def get(uid) when is_binary(uid) do
     with_ldap_do(fn ldap ->
-      base = Util.config!(:exldap, [:settings, :base])
-      case Exldap.search_field(ldap, base, attr_name(:user_id), uid) do
+      base_users = Util.config!(:exldap, [:settings, :base, :users])
+      case Exldap.search_field(ldap, base_users, attr_name(:user_id), uid) do
         {:ok, [%Exldap.Entry{} = entry | _]} -> to_user(entry)
         {:ok, []} -> nil
         {:error, :noSuchObject} -> nil
@@ -68,12 +68,12 @@ defmodule Auth.Ldap do
       nil -> %{users: [], groups: []}
       _ ->
         with_ldap_do(fn ldap ->
-          base = Util.config!(:exldap, [:settings, :base])
+          base_users = Util.config!(:exldap, [:settings, :base, :users])
           user_filter = Exldap.with_and([
             Exldap.equalityMatch(attr_name(:class), attr_name(:class_value_user)),
             Exldap.present(attr_name(:user_id)),
           ])
-          users = case Exldap.search_with_filter(ldap, base, user_filter) do
+          users = case Exldap.search_with_filter(ldap, base_users, user_filter) do
             {:ok, list} -> list |> Enum.map(&to_user/1)
             {:error, :noSuchObject} -> []
             {:error, error} -> raise Exception, error
@@ -81,7 +81,8 @@ defmodule Auth.Ldap do
           group_filter = Exldap.with_and([
             Exldap.equalityMatch(attr_name(:class), attr_name(:class_value_group)),
           ])
-          groups = case Exldap.search_with_filter(ldap, base, group_filter) do
+          base_groups = Util.config!(:exldap, [:settings, :base, :groups])
+          groups = case Exldap.search_with_filter(ldap, base_groups, group_filter) do
             {:ok, list} -> list |> Enum.map(&to_group/1)
             {:error, :noSuchObject} -> []
             {:error, error} -> raise Exception, error
