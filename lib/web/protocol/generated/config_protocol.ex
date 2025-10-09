@@ -186,7 +186,7 @@ defmodule ConfigProtocol do
     @enforce_keys [:server, :user_dn, :password, :base, :attr]
     defstruct [server: nil, port: 389, ssl: false, user_dn: nil, password: nil, base: nil, attr: nil]
 
-    @type t :: %Ldap{server: String.t(), port: integer, ssl: boolean, user_dn: String.t(), password: String.t(), base: String.t(), attr: ConfigProtocol.LdapAttrs.t()}
+    @type t :: %Ldap{server: String.t(), port: integer, ssl: boolean, user_dn: String.t(), password: String.t(), base: ConfigProtocol.LdapBase.t(), attr: ConfigProtocol.LdapAttrs.t()}
 
     @spec from_json!(Igor.Json.json()) :: t()
     def from_json!(json) do
@@ -195,7 +195,7 @@ defmodule ConfigProtocol do
       ssl = Igor.Json.parse_field!(json, "ssl", :boolean, false)
       user_dn = Igor.Json.parse_field!(json, "user_dn", :string)
       password = Igor.Json.parse_field!(json, "password", :string)
-      base = Igor.Json.parse_field!(json, "base", :string)
+      base = Igor.Json.parse_field!(json, "base", {:custom, ConfigProtocol.LdapBase})
       attr = Igor.Json.parse_field!(json, "attr", {:custom, ConfigProtocol.LdapAttrs})
       %Ldap{
         server: server,
@@ -225,8 +225,33 @@ defmodule ConfigProtocol do
         "ssl" => Igor.Json.pack_value(ssl, :boolean),
         "user_dn" => Igor.Json.pack_value(user_dn, :string),
         "password" => Igor.Json.pack_value(password, :string),
-        "base" => Igor.Json.pack_value(base, :string),
+        "base" => ConfigProtocol.LdapBase.to_json!(base),
         "attr" => ConfigProtocol.LdapAttrs.to_json!(attr)
+      }
+    end
+
+  end
+
+  defmodule LdapBase do
+
+    @enforce_keys [:users, :groups]
+    defstruct [users: nil, groups: nil]
+
+    @type t :: %LdapBase{users: String.t(), groups: String.t()}
+
+    @spec from_json!(Igor.Json.json()) :: t()
+    def from_json!(json) do
+      users = Igor.Json.parse_field!(json, "users", :string)
+      groups = Igor.Json.parse_field!(json, "groups", :string)
+      %LdapBase{users: users, groups: groups}
+    end
+
+    @spec to_json!(t()) :: Igor.Json.json()
+    def to_json!(args) do
+      %{users: users, groups: groups} = args
+      %{
+        "users" => Igor.Json.pack_value(users, :string),
+        "groups" => Igor.Json.pack_value(groups, :string)
       }
     end
 
