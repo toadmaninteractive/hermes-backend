@@ -291,6 +291,8 @@ defmodule Repo.Seeds do
     :ok
   rescue
     Ecto.ConstraintError -> {:error, :eexists}
+  after
+    Repo.query!("SELECT setval('countries_id_seq', COALESCE((SELECT MAX(id) FROM countries), 1))", [])
   end
 
   def seed_roles() do
@@ -315,6 +317,8 @@ defmodule Repo.Seeds do
     :ok
   rescue
     Ecto.ConstraintError -> {:error, :eexists}
+  after
+    Repo.query!("SELECT setval('roles_id_seq', COALESCE((SELECT MAX(id) FROM roles), 1))", [])
   end
 
   def seed_highlights() do
@@ -325,6 +329,8 @@ defmodule Repo.Seeds do
     :ok
   rescue
     Ecto.ConstraintError -> {:error, :eexists}
+  after
+    Repo.query!("SELECT setval('highlights_id_seq', COALESCE((SELECT MAX(id) FROM highlights), 1))", [])
   end
 
 end
